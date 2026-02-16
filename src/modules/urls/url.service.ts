@@ -9,19 +9,17 @@ import {
 } from './url.types';
 import { UrlRepository } from './url.repository';
 import { enqueueClick } from '../../workers/click.worker';
-
-process.stdout.write('URL SERVICE FILE LOADED\n');
+import { logger } from '../../shared/logger';
 
 export class UrlService implements IUrlService {
   constructor(private readonly repository = new UrlRepository()) {}
 
-  // ---------------- CREATE ----------------
+  //CREATE
   async createShortUrl(
     input: CreateUrlInput
   ): Promise<CreateUrlResult> {
     const { longUrl, expiresAt = null } = input;
 
-    
     const client = await pool.connect();
 
     try {
@@ -43,6 +41,11 @@ export class UrlService implements IUrlService {
 
       await client.query('COMMIT');
 
+      logger.info(
+        { shortCode, longUrl },
+        'Short URL created successfully'
+      );
+
       return {
         shortCode,
         longUrl,
@@ -50,19 +53,25 @@ export class UrlService implements IUrlService {
       };
     } catch (error) {
       await client.query('ROLLBACK');
+
+      logger.error(
+        { err: error, longUrl },
+        'Failed to create short URL'
+      );
+
       throw error;
     } finally {
       client.release();
     }
   }
 
-  // ---------------- RESOLVE (CACHE-FIRST + RESILIENT + ASYNC CLICK) ----------------
+  //RESOLVE (CACHE-FIRST + RESILIENT + ASYNC CLICK)
   async resolveShortCode(
     shortCode: string
   ): Promise<ResolveResult> {
     const cacheKey = `url:${shortCode}`;
 
-    // 1️⃣ Redis read (timeout protected)
+    //Redis read (timeout protected)
     const cached = await this.safeRedisGet(cacheKey);
 
     if (cached) {
@@ -70,8 +79,11 @@ export class UrlService implements IUrlService {
 
       try {
         data = JSON.parse(cached);
-      } catch {
-        console.error('Invalid cache format');
+      } catch (err) {
+        logger.warn(
+          { shortCode, err },
+          'Invalid cache format detected'
+        );
         return { status: 'not_found' };
       }
 
@@ -81,20 +93,34 @@ export class UrlService implements IUrlService {
 
       enqueueClick(data.id);
 
+      logger.debug(
+        { shortCode },
+        'Cache hit for short code'
+      );
+
       return { status: 'success', longUrl: data.longUrl };
     }
 
-    // 2️⃣ Fallback to DB
+    //Fallback to DB
     const record = await this.repository.findByShortCode(shortCode);
 
-    if (!record) return { status: 'not_found' };
+    if (!record) {
+      logger.warn({ shortCode }, 'Short code not found');
+      return { status: 'not_found' };
+    }
+
     if (!record.isActive) return { status: 'inactive' };
     if (this.isExpired(record.expiresAt))
       return { status: 'expired' };
 
     enqueueClick(record.id);
 
-    // 3️⃣ Cache write (timeout protected)
+    logger.debug(
+      { shortCode },
+      'DB fallback for short code'
+    );
+
+    //Cache write (timeout protected)
     const ttl = this.calculateTTL(record.expiresAt);
 
     if (ttl > 0) {
@@ -113,7 +139,7 @@ export class UrlService implements IUrlService {
     return { status: 'success', longUrl: record.longUrl };
   }
 
-  // ---------------- REDIS SAFETY LAYER ----------------
+  //REDIS SAFETY LAYER
 
   private async safeRedisGet(
     key: string,
@@ -129,7 +155,7 @@ export class UrlService implements IUrlService {
         ),
       ]);
     } catch (err) {
-      console.error('Redis read error:', err);
+      logger.warn({ err, key }, 'Redis read error');
       return null;
     }
   }
@@ -150,11 +176,11 @@ export class UrlService implements IUrlService {
         ),
       ]);
     } catch (err) {
-      console.error('Redis write error:', err);
+      logger.warn({ err, key }, 'Redis write error');
     }
   }
 
-  // ---------------- HELPERS ----------------
+  //HELPERS
 
   private isExpired(expiresAt?: Date | null): boolean {
     if (!expiresAt) return false;
@@ -162,7 +188,7 @@ export class UrlService implements IUrlService {
   }
 
   private calculateTTL(expiresAt?: Date | null): number {
-    const DEFAULT_TTL = 3600; // 1 hour
+    const DEFAULT_TTL = 3600;
 
     if (!expiresAt) return DEFAULT_TTL;
 

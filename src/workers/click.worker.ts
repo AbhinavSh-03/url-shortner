@@ -1,4 +1,5 @@
 import { pool } from '../config/database';
+import { logger } from '../shared/logger';
 
 type ClickEvent = {
   urlId: number;
@@ -53,7 +54,7 @@ async function flushClicks() {
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('Click flush failed:', err);
+    logger.error({ err }, 'Click flush failed');
   } finally {
     client.release();
   }

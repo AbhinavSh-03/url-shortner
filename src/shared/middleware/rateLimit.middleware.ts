@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { redis } from '../../config/redis';
+import { logger } from '../logger';
 
 interface RateLimitOptions {
   windowInSeconds: number;
@@ -48,7 +49,7 @@ export const rateLimit =
       next();
     } catch (err) {
       // 🛡 Fail open — never block users if Redis fails
-      console.error('Rate limit error:', err);
+      logger.warn({ err }, 'Rate limit error');
       next();
     }
   };
