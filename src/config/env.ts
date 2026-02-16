@@ -15,10 +15,10 @@ function required(key: string): string {
 
 export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
-  PORT: parseInt(process.env.PORT || '3000', 10),
+  PORT: parseInt(process.env.PORT || '4000', 10),
 
   DATABASE_URL: required('DATABASE_URL'),
   REDIS_URL: required('REDIS_URL'),
 
-  BASE_URL: process.env.BASE_URL || 'http://localhost:3000',
+  BASE_URL: process.env.BASE_URL || 'http://localhost:4000',
 };

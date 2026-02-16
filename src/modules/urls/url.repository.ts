@@ -9,7 +9,7 @@ import {
 export class UrlRepository implements IUrlRepository {
   constructor(private readonly db: Pool = pool) {}
 
-  // ---------- INTERNAL MAPPER ----------
+  //INTERNAL MAPPER
   private mapRowToEntity(row: any): UrlEntity {
     return {
       id: row.id,
@@ -23,7 +23,7 @@ export class UrlRepository implements IUrlRepository {
     };
   }
 
-  // ---------- CREATE (NON-TRANSACTIONAL) ----------
+  //CREATE (NON-TRANSACTIONAL)
   async create(
     longUrl: string,
     expiresAt: Date | null = null
@@ -40,7 +40,7 @@ export class UrlRepository implements IUrlRepository {
     return this.mapRowToEntity(result.rows[0]);
   }
 
-  // ---------- CREATE (TRANSACTIONAL) ----------
+  //CREATE (TRANSACTIONAL)
   async createWithClient(
     client: PoolClient,
     longUrl: string,
@@ -58,7 +58,7 @@ export class UrlRepository implements IUrlRepository {
     return this.mapRowToEntity(result.rows[0]);
   }
 
-  // ---------- UPDATE SHORT CODE ----------
+  //UPDATE SHORT CODE
   async updateShortCode(
     id: number,
     shortCode: string
@@ -88,7 +88,7 @@ export class UrlRepository implements IUrlRepository {
     );
   }
 
-  // ---------- FIND ----------
+  //FIND 
   async findByShortCode(
     shortCode: string
   ): Promise<ResolveUrlResult | null> {
@@ -100,6 +100,8 @@ export class UrlRepository implements IUrlRepository {
       `,
       [shortCode]
     );
+
+    
 
     if (result.rows.length === 0) return null;
 
@@ -113,7 +115,7 @@ export class UrlRepository implements IUrlRepository {
     };
   }
 
-  // ---------- INCREMENT ----------
+  //INCREMENT
   async incrementAccessCount(id: number): Promise<void> {
     await this.db.query(
       `

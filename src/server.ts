@@ -1,19 +1,26 @@
-import { UrlService } from './modules/urls/url.service';
+import { createApp } from './app';
+import { env } from './config/env';
+import { pool } from './config/database';
+import { connectRedis } from './config/redis';
+import './workers/click.worker';
 
-async function testService() {
-  const service = new UrlService();
+async function bootstrap() {
+  try {
+    await pool.query('SELECT 1');
+    console.log('PostgreSQL connected');
 
-  const result = await service.createShortUrl({
-    longUrl: 'https://example.com',
-  });
+    await connectRedis();
+    console.log('Redis connected');
 
-  console.log('Created:', result);
+    const app = createApp();
 
-  const resolved = await service.resolveShortCode(result.shortCode);
-  console.log('Resolved:', resolved);
+    app.listen(env.PORT, () => {
+      console.log(`Server running on port ${env.PORT}`);
+    });
+  } catch (error) {
+    console.error('Startup failed:', error);
+    process.exit(1);
+  }
 }
 
-testService();
-
-
-console.log('server starting ...');
+bootstrap();

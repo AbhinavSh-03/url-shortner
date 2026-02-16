@@ -4,11 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-  "build": "tsc",
-  "start": "node dist/server.js",
-  "test": "jest",
-  "lint": "echo \"Add ESLint later\""
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "jest",
+    "lint": "echo \"Add ESLint later\""
   },
   "keywords": [],
   "author": "",
@@ -21,7 +21,8 @@
     "helmet": "^8.1.0",
     "pg": "^8.18.0",
     "pino": "^10.3.1",
-    "redis": "^5.10.0"
+    "redis": "^5.10.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

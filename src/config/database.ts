@@ -10,10 +10,6 @@ export const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
-pool.on('connect', () => {
-  console.log('PostgreSQL connected');
-});
-
 pool.on('error', (err) => {
   console.error('Unexpected PG error', err);
   process.exit(1);
