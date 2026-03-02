@@ -1,6 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import authRoutes from "./modules/auth/auth.routes";
 import urlRoutes from './modules/urls/url.routes';
 
 export function createApp() {
@@ -17,6 +18,8 @@ export function createApp() {
 
   // Parse JSON
   app.use(express.json());
+
+  app.use("/auth", authRoutes);
 
   // API routes
   app.use('/api', urlRoutes);
