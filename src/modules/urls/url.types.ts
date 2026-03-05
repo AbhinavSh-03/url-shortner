@@ -1,3 +1,5 @@
+import { PoolClient } from "pg";
+
 // ENTITY (Database Representation)
 export interface UrlEntity {
   id: number;
@@ -12,6 +14,7 @@ export interface UrlEntity {
 
 // INPUT / OUTPUT DTOs
 export interface CreateUrlInput {
+  userId: number;
   longUrl: string;
   expiresAt?: Date | null;
 }
@@ -24,10 +27,10 @@ export interface CreateUrlResult {
 
 // RESOLVE RESULT (Rich Response)
 export type ResolveResult =
-  | { status: 'not_found' }
-  | { status: 'inactive' }
-  | { status: 'expired' }
-  | { status: 'success'; longUrl: string };
+  | { status: "not_found" }
+  | { status: "inactive" }
+  | { status: "expired" }
+  | { status: "success"; longUrl: string };
 
 // Repository Return Type
 export interface ResolveUrlResult {
@@ -39,13 +42,32 @@ export interface ResolveUrlResult {
 
 // Repository Contract (DB Layer)
 export interface IUrlRepository {
-  create(longUrl: string, expiresAt?: Date | null): Promise<UrlEntity>;
+  // Non-transactional create
+  create(
+    userId: number,
+    longUrl: string,
+    expiresAt?: Date | null
+  ): Promise<UrlEntity>;
+
+  // Transactional create (used by service)
+  createWithClient(
+    client: PoolClient,
+    userId: number,
+    longUrl: string,
+    expiresAt?: Date | null
+  ): Promise<UrlEntity>;
+
+  updateShortCode(id: number, shortCode: string): Promise<void>;
+
+  updateShortCodeWithClient(
+    client: PoolClient,
+    id: number,
+    shortCode: string
+  ): Promise<void>;
 
   findByShortCode(shortCode: string): Promise<ResolveUrlResult | null>;
 
   incrementAccessCount(id: number): Promise<void>;
-
-  updateShortCode(id: number, shortCode: string): Promise<void>;
 }
 
 // Service Contract (Business Layer)

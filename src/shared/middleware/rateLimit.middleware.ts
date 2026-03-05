@@ -11,7 +11,7 @@ interface RateLimitOptions {
 export const rateLimit =
   ({ windowInSeconds, maxRequests, keyPrefix }: RateLimitOptions) =>
   async (req: Request, res: Response, next: NextFunction) => {
-    const identifier = req.ip;
+    const identifier = req.user?.userId?.toString() || req.ip;
     const key = `${keyPrefix}:${identifier}`;
 
     try {

@@ -25,16 +25,17 @@ export class UrlRepository implements IUrlRepository {
 
   //CREATE (NON-TRANSACTIONAL)
   async create(
+    userId: number,
     longUrl: string,
     expiresAt: Date | null = null
   ): Promise<UrlEntity> {
     const result = await this.db.query(
       `
-      INSERT INTO urls (long_url, expires_at)
-      VALUES ($1, $2)
+      INSERT INTO urls (long_url, user_id, expires_at)
+      VALUES ($1, $2, $3)
       RETURNING *
       `,
-      [longUrl, expiresAt]
+      [longUrl, userId, expiresAt]
     );
 
     return this.mapRowToEntity(result.rows[0]);
@@ -43,16 +44,17 @@ export class UrlRepository implements IUrlRepository {
   //CREATE (TRANSACTIONAL)
   async createWithClient(
     client: PoolClient,
+    userId: number,
     longUrl: string,
     expiresAt: Date | null = null
   ): Promise<UrlEntity> {
     const result = await client.query(
       `
-      INSERT INTO urls (long_url, expires_at)
-      VALUES ($1, $2)
+      INSERT INTO urls (long_url, user_id, expires_at)
+      VALUES ($1, $2, $3)
       RETURNING *
       `,
-      [longUrl, expiresAt]
+      [longUrl, userId, expiresAt]
     );
 
     return this.mapRowToEntity(result.rows[0]);
@@ -88,7 +90,7 @@ export class UrlRepository implements IUrlRepository {
     );
   }
 
-  //FIND 
+  //FIND
   async findByShortCode(
     shortCode: string
   ): Promise<ResolveUrlResult | null> {
@@ -100,8 +102,6 @@ export class UrlRepository implements IUrlRepository {
       `,
       [shortCode]
     );
-
-    
 
     if (result.rows.length === 0) return null;
 

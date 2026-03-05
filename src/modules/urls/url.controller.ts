@@ -13,16 +13,21 @@ export class UrlController {
     try {
       const { longUrl, expiresAt } = req.body;
 
+      const userId = req.user!.userId;
+
       const result = await this.service.createShortUrl({
+        userId,
         longUrl,
         expiresAt: expiresAt ?? null,
       });
 
       return res.status(201).json(result);
-    } catch (error: any) {
-      return res.status(400).json({
-        error: error.message || 'Failed to create short URL',
-      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(400).json({ error: error.message });
+      }
+
+      return res.status(500).json({ error: 'Unknown error occurred' });
     }
   };
 
@@ -38,11 +43,14 @@ export class UrlController {
 
       switch (result.status) {
         case 'success':
-          return res.redirect(result.longUrl);
+          return res.redirect(302, result.longUrl);
+
         case 'expired':
           return res.status(410).json({ error: 'Link expired' });
+
         case 'inactive':
           return res.status(403).json({ error: 'Link inactive' });
+
         default:
           return res.status(404).json({ error: 'Not found' });
       }

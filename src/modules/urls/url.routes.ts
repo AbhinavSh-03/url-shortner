@@ -3,23 +3,28 @@ import { UrlController } from './url.controller';
 import { validate } from '../../shared/validation/validate.middleware';
 import { createUrlSchema } from './url.schema';
 import { rateLimit } from '../../shared/middleware/rateLimit.middleware';
+import { authenticate } from '../../shared/middleware/auth.middleware';
 
 const router = Router();
 const controller = new UrlController();
 
-// Rate limit → Validate → Controller
+
+//  Auth → RateLimit → Validate → Controller
 router.post(
   '/shorten',
+  authenticate,
   rateLimit({
     windowInSeconds: 60,
     maxRequests: 30,
     keyPrefix: 'rl:create',
   }),
   validate(createUrlSchema),
-  controller.createShortUrl
+  controller.createShortUrl.bind(controller)
 );
 
-// Redirect rate limit only
+
+// redirect -> No authentication required
+
 router.get(
   '/:shortCode',
   rateLimit({
@@ -27,7 +32,7 @@ router.get(
     maxRequests: 300,
     keyPrefix: 'rl:redirect',
   }),
-  controller.redirect
+  controller.redirect.bind(controller)
 );
 
 export default router;
