@@ -42,14 +42,12 @@ export interface ResolveUrlResult {
 
 // Repository Contract (DB Layer)
 export interface IUrlRepository {
-  // Non-transactional create
   create(
     userId: number,
     longUrl: string,
     expiresAt?: Date | null
   ): Promise<UrlEntity>;
 
-  // Transactional create (used by service)
   createWithClient(
     client: PoolClient,
     userId: number,
@@ -67,6 +65,8 @@ export interface IUrlRepository {
 
   findByShortCode(shortCode: string): Promise<ResolveUrlResult | null>;
 
+  findByUserId(userId: number): Promise<UrlEntity[]>;
+
   incrementAccessCount(id: number): Promise<void>;
 }
 
@@ -75,4 +75,6 @@ export interface IUrlService {
   createShortUrl(input: CreateUrlInput): Promise<CreateUrlResult>;
 
   resolveShortCode(shortCode: string): Promise<ResolveResult>;
+
+  getUserUrls(userId: number): Promise<UrlEntity[]>;
 }

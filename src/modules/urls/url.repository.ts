@@ -115,6 +115,21 @@ export class UrlRepository implements IUrlRepository {
     };
   }
 
+  //IDOR safe urls viewing
+  async findByUserId(userId: number): Promise<UrlEntity[]> {
+  const result = await this.db.query(
+    `
+    SELECT *
+    FROM urls
+    WHERE user_id = $1
+    ORDER BY created_at DESC
+    `,
+    [userId]
+  );
+
+  return result.rows.map(row => this.mapRowToEntity(row));
+}
+
   //INCREMENT
   async incrementAccessCount(id: number): Promise<void> {
     await this.db.query(

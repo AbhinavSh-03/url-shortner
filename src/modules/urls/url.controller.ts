@@ -3,7 +3,7 @@ import { UrlService } from './url.service';
 import { CreateUrlRequest } from './url.schema';
 
 export class UrlController {
-  constructor(private readonly service = new UrlService()) {}
+  constructor(private readonly service = new UrlService()) { }
 
   // POST /api/shorten
   createShortUrl = async (
@@ -58,4 +58,22 @@ export class UrlController {
       return res.status(500).json({ error: 'Internal server error' });
     }
   };
+
+  // GET /api/urls
+  getUserUrls = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.userId;
+
+      const urls = await this.service.getUserUrls(userId);
+
+      return res.status(200).json(urls);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(400).json({ error: error.message });
+      }
+
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  };
+
 }

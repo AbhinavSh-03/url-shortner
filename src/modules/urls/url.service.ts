@@ -6,65 +6,70 @@ import {
   CreateUrlResult,
   ResolveResult,
   IUrlService,
+  UrlEntity,
 } from './url.types';
 import { UrlRepository } from './url.repository';
 import { enqueueClick } from '../../workers/click.worker';
 import { logger } from '../../shared/logger';
 
 export class UrlService implements IUrlService {
-  constructor(private readonly repository = new UrlRepository()) {}
+  constructor(private readonly repository = new UrlRepository()) { }
 
   //CREATE
   async createShortUrl(
-  input: CreateUrlInput
-): Promise<CreateUrlResult> {
-  const { userId, longUrl, expiresAt = null } = input;
+    input: CreateUrlInput
+  ): Promise<CreateUrlResult> {
+    const { userId, longUrl, expiresAt = null } = input;
 
-  const client = await pool.connect();
+    const client = await pool.connect();
 
-  try {
-    await client.query('BEGIN');
+    try {
+      await client.query('BEGIN');
 
-    const entity = await this.repository.createWithClient(
-      client,
-      userId,      // ← NEW
-      longUrl,
-      expiresAt
-    );
+      const entity = await this.repository.createWithClient(
+        client,
+        userId,      // ← NEW
+        longUrl,
+        expiresAt
+      );
 
-    const shortCode = encode(entity.id);
+      const shortCode = encode(entity.id);
 
-    await this.repository.updateShortCodeWithClient(
-      client,
-      entity.id,
-      shortCode
-    );
+      await this.repository.updateShortCodeWithClient(
+        client,
+        entity.id,
+        shortCode
+      );
 
-    await client.query('COMMIT');
+      await client.query('COMMIT');
 
-    logger.info(
-      { shortCode, longUrl, userId },
-      'Short URL created successfully'
-    );
+      logger.info(
+        { shortCode, longUrl, userId },
+        'Short URL created successfully'
+      );
 
-    return {
-      shortCode,
-      longUrl,
-      expiresAt,
-    };
-  } catch (error) {
-    await client.query('ROLLBACK');
+      return {
+        shortCode,
+        longUrl,
+        expiresAt,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
 
-    logger.error(
-      { err: error, longUrl, userId },
-      'Failed to create short URL'
-    );
+      logger.error(
+        { err: error, longUrl, userId },
+        'Failed to create short URL'
+      );
 
-    throw error;
-  } finally {
-    client.release();
+      throw error;
+    } finally {
+      client.release();
+    }
   }
-}
+
+  async getUserUrls(userId: number): Promise<UrlEntity[]> {
+  return this.repository.findByUserId(userId);
+  }
 
   //RESOLVE (CACHE-FIRST + RESILIENT + ASYNC CLICK)
   async resolveShortCode(

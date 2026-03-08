@@ -22,6 +22,17 @@ router.post(
   controller.createShortUrl.bind(controller)
 );
 
+//IDOR safe urls access
+router.get(
+  '/urls',
+  authenticate,
+  rateLimit({
+    windowInSeconds: 60,
+    maxRequests: 60,
+    keyPrefix: 'rl:list',
+  }),
+  controller.getUserUrls.bind(controller)
+);
 
 // redirect -> No authentication required
 
