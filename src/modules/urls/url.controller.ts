@@ -76,4 +76,30 @@ export class UrlController {
     }
   };
 
+  // DELETE /api/urls/:id
+  deleteUrl = async (req: Request<{id:string}>, res: Response) => {
+    try {
+      const userId = req.user!.userId;
+      const id = parseInt(req.params.id, 10);
+
+      const deleted = await this.service.deleteUrl(id, userId);
+
+      if (!deleted) {
+        return res.status(404).json({
+          error: "URL not found",
+        });
+      }
+
+      return res.status(204).send();
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        return res.status(400).json({ error: error.message });
+      }
+
+      return res.status(500).json({
+        error: "Internal server error",
+      });
+    }
+  };
+
 }

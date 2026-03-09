@@ -34,6 +34,19 @@ router.get(
   controller.getUserUrls.bind(controller)
 );
 
+// Deleting URLs IDOR safe
+
+router.delete(
+  '/urls/:id',
+  authenticate,
+  rateLimit({
+    windowInSeconds: 60,
+    maxRequests: 30,
+    keyPrefix: 'rl:delete',
+  }),
+  controller.deleteUrl.bind(controller)
+);
+
 // redirect -> No authentication required
 
 router.get(

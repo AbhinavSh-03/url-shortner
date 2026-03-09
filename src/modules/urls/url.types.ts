@@ -67,6 +67,8 @@ export interface IUrlRepository {
 
   findByUserId(userId: number): Promise<UrlEntity[]>;
 
+  deleteByIdAndUserId(id: number, userId: number): Promise<boolean>;
+
   incrementAccessCount(id: number): Promise<void>;
 }
 
@@ -77,4 +79,6 @@ export interface IUrlService {
   resolveShortCode(shortCode: string): Promise<ResolveResult>;
 
   getUserUrls(userId: number): Promise<UrlEntity[]>;
+
+  deleteUrl(id: number, userId: number): Promise<boolean>;
 }

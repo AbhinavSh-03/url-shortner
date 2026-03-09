@@ -7,7 +7,7 @@ import {
 } from './url.types';
 
 export class UrlRepository implements IUrlRepository {
-  constructor(private readonly db: Pool = pool) {}
+  constructor(private readonly db: Pool = pool) { }
 
   //INTERNAL MAPPER
   private mapRowToEntity(row: any): UrlEntity {
@@ -115,20 +115,36 @@ export class UrlRepository implements IUrlRepository {
     };
   }
 
+  async deleteByIdAndUserId(
+    id: number,
+    userId: number
+  ): Promise<boolean> {
+    const result = await this.db.query(
+      `
+    DELETE FROM urls
+    WHERE id = $1
+    AND user_id = $2
+    `,
+      [id, userId]
+    );
+
+    return (result.rowCount ?? 0) > 0;
+  }
+
   //IDOR safe urls viewing
   async findByUserId(userId: number): Promise<UrlEntity[]> {
-  const result = await this.db.query(
-    `
+    const result = await this.db.query(
+      `
     SELECT *
     FROM urls
     WHERE user_id = $1
     ORDER BY created_at DESC
     `,
-    [userId]
-  );
+      [userId]
+    );
 
-  return result.rows.map(row => this.mapRowToEntity(row));
-}
+    return result.rows.map(row => this.mapRowToEntity(row));
+  }
 
   //INCREMENT
   async incrementAccessCount(id: number): Promise<void> {

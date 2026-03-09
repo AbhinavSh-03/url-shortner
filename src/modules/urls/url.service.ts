@@ -68,7 +68,14 @@ export class UrlService implements IUrlService {
   }
 
   async getUserUrls(userId: number): Promise<UrlEntity[]> {
-  return this.repository.findByUserId(userId);
+    return this.repository.findByUserId(userId);
+  }
+
+  async deleteUrl(
+    id: number,
+    userId: number
+  ): Promise<boolean> {
+    return this.repository.deleteByIdAndUserId(id, userId);
   }
 
   //RESOLVE (CACHE-FIRST + RESILIENT + ASYNC CLICK)
